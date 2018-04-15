@@ -1,6 +1,7 @@
 package io.github.sigill.dontyoufillit;
 
 import android.app.Activity;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
 import android.webkit.ConsoleMessage;
