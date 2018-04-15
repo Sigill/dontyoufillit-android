@@ -1,7 +1,9 @@
 package io.github.sigill.dontyoufillit;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.res.Configuration;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.webkit.ConsoleMessage;
@@ -27,6 +29,12 @@ public class MainActivity extends Activity {
         WebSettings webSettings = mWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
         webSettings.setDomStorageEnabled(true);
+
+        // Starting with Android 4.4, the Chromium WebView takes care of localstorage persistence.
+        if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
+            String databasePath = this.getApplicationContext().getDir("database", Context.MODE_PRIVATE).getPath();
+            webSettings.setDatabasePath(databasePath);
+        }
 
         mWebView.setWebChromeClient(new WebChromeClient() {
             public boolean onConsoleMessage(ConsoleMessage cm) {
