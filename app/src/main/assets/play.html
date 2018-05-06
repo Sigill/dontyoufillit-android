@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+	<title>DontYouFillIt</title>
+	<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div id="Game" class="fullscreen">
+	<div id="Board">
+		<div id="Score" class="Score">
+			<span class="L1">Highscore</span>
+			<span id="highscore" class="L1 C2"></span>
+			<span class="L2">Score</span>
+			<span id="score" class="L2 C2"></span>
+		</div>
+		<div id="PauseButton" class="PauseButton">
+			<div class="P1"></div>
+			<div class="P2"></div>
+		</div>
+		<div id="StaticBallLayer"></div>
+		<div class="Cannon">
+			<div class="In">
+				<div class="Base"></div>
+				<div class="Dome"></div>
+				<div id="Turret" class="Turret"></div>
+			</div>
+		</div>
+		<div id="LiveBallLayer"></div>
+	</div>
+	<div id="DefaultBall" class="B" style="display: none;">
+		<div class="disk"></div><div class="num"></div><div class="b b1"></div><div class="b b2"></div>
+	</div>
+</div>
+<div id="screenContainer" class="fullscreen">
+	<div id="startScreen" class="fullscreen screen">
+		<div class="fullscreen vcentered">
+			<div class="vcentered-inner">
+				<p class="title">DontYouFillIt</p>
+				<p class="button"><span id="startScreenPlayButton">Play</span></p>
+				<p class="button"><span id="startScreenOptionsButton">Options</span></p>
+				<p class="button"><span id="startScreenLicenseButton">License</span></p>
+			</div>
+		</div>
+	</div>
+	<div id="optionsScreen" class="fullscreen screen">
+		<div class="fullscreen vcentered">
+			<div class="vcentered-inner">
+				<p class="title">Options</p>
+				<table class="centered">
+					<tr>
+						<td><p class="option">Show framerate</p></td>
+						<td><label class="switch"><input type="checkbox" id="framerateCheckbox"><span class="slider"></span></label></label></td>
+					</tr>
+				</table>
+				<p class="button"><span id="optionsScreenBackButton">Back</span></p>
+			</div>
+		</div>
+	</div>
+	<div id="pauseScreen" class="fullscreen screen">
+		<div class="fullscreen vcentered">
+			<div class="vcentered-inner">
+				<p class="title">Game paused</p>
+				<p class="button"><span id="pauseScreenContinueButton">Continue</span></p>
+				<p class="button"><span id="pauseScreenOptionsButton">Options</span></p>
+			</div>
+		</div>
+	</div>
+	<div id="gameoverScreen" class="fullscreen screen">
+		<div class="fullscreen vcentered">
+			<div class="vcentered-inner">
+				<p class="title">Game Over</p>
+				<p class="score"><span id="gameoverScreenScoreMessage">Your score</span><span id="gameoverScreenHighscoreMessage">New highscore</span>: <span id="gameoverScreenScore"></span></p>
+				<p class="button"><span id="gameoverScreenPlayAgainButton">Play again</span></p>
+			</div>
+		</div>
+	</div>
+	<div id="licenseScreen" class="screen">
+		<p class="title">License</p>
+		<p>DontYouFillIt is free software. Source code is available at <a href="https://github.com/Sigill/dontyoufillit">https://github.com/Sigill/dontyoufillit</a>. You can redistribute it and/or modify it under the terms of the MIT License.</p>
+<p>Copyright (c) 2018 Cyrille FAUCHEUX.</p>
+<p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p>
+<p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p>
+<p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+
+		<h2>Third parties</h2>
+		<h3><a class="stats-js-details plain">[+]</a> stats.js (<a href="https://github.com/mrdoob/stats.js">website</a>) / MIT License</h3>
+		<div class="hideable" data-toggle="stats-js-details">
+			<p>Copyright (c) 2009-2016 stats.js authors</p>
+			<p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p>
+			<p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p>
+			<p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+		</div>
+
+		<h3><a class="raf-details plain">[+]</a> requestAnimationFrame polyfill (<a href="https://github.com/darius/requestAnimationFrame">website</a>) / MIT License</h3>
+		<div class="hideable" data-toggle="raf-details">
+			<p>Copyright (c) 2013 Darius Bacon</p>
+			<p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p>
+			<p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p>
+			<p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+		</div>
+		<p class="button"><span id="licenseScreenBackButton">Back</span></p>
+	</div>
+</div>
+<script src="requestAnimationFrame.js"></script>
+<script src="passiveEvent.js"></script>
+<script src="stats.js"></script>
+<script src="observable.js"></script>
+<script src="dontyoufillit.js"></script>
+<script src="dontyoufillit_css_gui.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
