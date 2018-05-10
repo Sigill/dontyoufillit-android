@@ -26,9 +26,7 @@ public class DontYouFillItView extends View implements OnTouchListener {
     protected static final int FPS = 60;
     private static final String HIGHSCORE_PREF = "highscore";
 
-    public static enum BallState {Launched, Alive, Stopped}
-
-    public static enum Mode {PAUSE, RUNNING, GAMEOVER}
+    public enum Mode {PAUSE, RUNNING, GAMEOVER}
     private Mode mCurrentMode = Mode.RUNNING;
 
     private float SCALE, GAME_WIDTH, GAME_HEIGHT, V_OFFSET, H_OFFSET,
@@ -186,9 +184,18 @@ public class DontYouFillItView extends View implements OnTouchListener {
             for(int i = 1; i <= 10; ++i) {
                 current = (mLastFrameTimestamp * (10-i) + mCurrentFrameTimestamp * i) / 10;
 
-                this.mCurrentBall.update(last / 1000f, (current - last) / 1000f);
+                this.mCurrentBall.update(last / 1000f, (current - last) / 1000f, mListBalls);
 
-                if(this.mCurrentBall.ny < this.mCurrentBall.nr && normalizeRadian(this.mCurrentBall.direction) > Math.PI) {
+                Iterator<Ball> itr = mListBalls.iterator();
+                while (itr.hasNext()) {
+                    Ball o = itr.next();
+                    if(o.counter == 0) {
+                        mScore += 1;
+                        itr.remove();
+                    }
+                }
+
+                if(this.mCurrentBall.ny < this.mCurrentBall.nr && Utils.normalizeRadian(this.mCurrentBall.direction) > Math.PI) {
                     this.mCurrentBall.state.s = 0f;
 
                     if(this.mScore > this.mHighScore) {
@@ -202,11 +209,11 @@ public class DontYouFillItView extends View implements OnTouchListener {
                     }
 
                     setMode(Mode.GAMEOVER);
-                }
 
-                if(this.mCurrentBall.state.s < 0.01) {
+                    break;
+                } else if(this.mCurrentBall.state.s < 0.01) {
                     if(this.mCurrentBall.ny >= 0) {
-                        this.mCurrentBall.grow();
+                        this.mCurrentBall.grow(mListBalls);
                         this.mListBalls.add(this.mCurrentBall);
                     }
                     this.mCurrentBall = null;
@@ -266,14 +273,13 @@ public class DontYouFillItView extends View implements OnTouchListener {
 
         drawScene(canvas);
 
-        mCannon.draw(canvas);
+        draw(mCannon, canvas);
 
-        Iterator<Ball> itr = this.mListBalls.iterator();
-        while(itr.hasNext())
-            itr.next().draw(canvas);
+        for (Ball b : mListBalls)
+            draw(b, canvas);
 
         if(this.mCurrentBall != null)
-            this.mCurrentBall.draw(canvas);
+            draw(this.mCurrentBall, canvas);
 
         long now = System.currentTimeMillis();
         if(now - this.fpsCounterStart < 2000) {
@@ -339,134 +345,55 @@ public class DontYouFillItView extends View implements OnTouchListener {
         canvas.drawText(String.valueOf(this.mScore), LEFT_BORDER + scoreOffset, (float)(V_OFFSET + this.SCALE/6.0 - fmi.descent), mPaint);
     }
 
-    class RefreshHandler extends Handler {
-        @Override
-        public void handleMessage(Message msg) {
-            DontYouFillItView.this.update();
-            DontYouFillItView.this.invalidate(); // Mark the view as 'dirty'
-        }
+    private void draw(Cannon cannon, Canvas canvas) {
+        mPaint.setColor(Color.WHITE);
+        mPaint.setStyle(Style.FILL);
 
-        public void sleep(long delay) {
-            this.removeMessages(0);
-            this.sendMessageDelayed(obtainMessage(0), delay);
-        }
+        canvas.drawRect(
+                H_OFFSET + (SCALE - CANNON_BASE_WIDTH) / 2.0f,
+                BOTTOM_BORDER + SCALE / 6.0f,
+                H_OFFSET + (SCALE - CANNON_BASE_WIDTH) / 2.0f + CANNON_BASE_WIDTH,
+                BOTTOM_BORDER + SCALE / 6.0f - CANNON_BASE_HEIGHT,
+                mPaint
+        );
+
+        canvas.drawOval(
+                new RectF(
+                        H_OFFSET + SCALE / 2.0f - CANNON_BASE_WIDTH / 2.0f,
+                        (BOTTOM_BORDER + SCALE / 6.0f - CANNON_BASE_HEIGHT) - CANNON_BASE_WIDTH / 2.0f,
+                        H_OFFSET + SCALE / 2.0f + CANNON_BASE_WIDTH / 2.0f,
+                        (BOTTOM_BORDER + SCALE / 6.0f - CANNON_BASE_HEIGHT) + CANNON_BASE_WIDTH / 2.0f
+                ),
+                mPaint
+        );
+
+        mPaint.setStyle(Style.FILL);
+        mPaint.setStrokeWidth(CANNON_WIDTH);
+        mPaint.setStrokeCap(Paint.Cap.BUTT);
+
+        canvas.drawLine(
+                H_OFFSET + SCALE / 2.0f,
+                BOTTOM_BORDER + SCALE / 6.0f - CANNON_BASE_HEIGHT,
+                H_OFFSET + SCALE / 2.0f + (float) Math.cos(cannon.getAngle()) * CANNON_LENGTH, // End of cannon
+                BOTTOM_BORDER + SCALE / 6.0f - CANNON_BASE_HEIGHT - (float) Math.sin(cannon.getAngle()) * CANNON_LENGTH, // End of cannon
+                mPaint
+        );
     }
 
-    private class Cannon extends RK41DObject {
-        public Cannon() {
-            state.u = 0;
-            state.s = (float) (Math.PI/3.0);
-        }
+    private void draw(Ball ball, Canvas canvas) {
+        float x = LEFT_BORDER + ball.nx * SCALE;
+        float y = BOTTOM_BORDER - ball.ny * SCALE;
+        float r = ball.nr * SCALE;
 
-        /*
-         * Angle of the cannon. 0 is up, -pi/2 is left, pi/2 is right.
-         * WARNING: Opposite of the screen coordinates system !
-         */
-        public float getAngle() {
-            return state.u + (float)(Math.PI / 2.0);
-        }
+        mPaint.setColor(Color.WHITE);
+        mPaint.setStyle(Style.FILL);
+        mPaint.setStrokeWidth(0);
 
-        @Override
-        protected float acceleration(State s, float t) {
-            return 0;
-        }
+        canvas.drawOval(new RectF(x-r, y-r, x + r, y + r), mPaint);
 
-        public void update(float t, float dt) {
-            integrate(state, t, dt);
-            if(Math.abs(state.u) >= Math.PI / 2.0f) {
-                state.u = (float)(
-                        (
-                                (Math.PI / 2.0f)
-                                - Math.abs(Math.PI / 2.0f - Math.abs(state.u))
-                                )
-                                * Math.signum(state.u));
-                state.s *= -1;
-            }
-        }
+        mPaint.setAntiAlias(false);
 
-        public void draw(Canvas canvas) {
-            mPaint.setColor(Color.WHITE);
-            mPaint.setStyle(Style.FILL);
-
-            canvas.drawRect(
-                    H_OFFSET + (SCALE - CANNON_BASE_WIDTH) / 2.0f,
-                    BOTTOM_BORDER + SCALE / 6.0f,
-                    H_OFFSET + (SCALE - CANNON_BASE_WIDTH) / 2.0f + CANNON_BASE_WIDTH,
-                    BOTTOM_BORDER + SCALE / 6.0f - CANNON_BASE_HEIGHT,
-                    mPaint
-                    );
-
-            canvas.drawOval(
-                    new RectF(
-                            H_OFFSET + SCALE / 2.0f - CANNON_BASE_WIDTH / 2.0f,
-                            (BOTTOM_BORDER + SCALE / 6.0f - CANNON_BASE_HEIGHT) - CANNON_BASE_WIDTH / 2.0f,
-                            H_OFFSET + SCALE / 2.0f + CANNON_BASE_WIDTH / 2.0f,
-                            (BOTTOM_BORDER + SCALE / 6.0f - CANNON_BASE_HEIGHT) + CANNON_BASE_WIDTH / 2.0f
-                            ),
-                            mPaint
-                    );
-
-            mPaint.setStyle(Style.FILL);
-            mPaint.setStrokeWidth(CANNON_WIDTH);
-            mPaint.setStrokeCap(Paint.Cap.BUTT);
-
-            canvas.drawLine(
-                    H_OFFSET + SCALE / 2.0f,
-                    BOTTOM_BORDER + SCALE / 6.0f - CANNON_BASE_HEIGHT,
-                    H_OFFSET + SCALE / 2.0f + (float) Math.cos(getAngle()) * CANNON_LENGTH, // End of cannon
-                    BOTTOM_BORDER + SCALE / 6.0f - CANNON_BASE_HEIGHT - (float) Math.sin(getAngle()) * CANNON_LENGTH, // End of cannon
-                    mPaint
-                    );
-        }
-    }
-
-    /*
-    private float normalizeDegree(final float a) {
-        float aa = a % 360;
-        if (aa < 0) return aa + 360;
-        if (aa > 360) return aa - 360;
-        return aa;
-    }
-     */
-
-    private float normalizeRadian(final float a) {
-        final float TWOPI = (float) (2 * Math.PI);
-
-        float aa = a % TWOPI;
-        if (aa < 0) return aa + TWOPI;
-        if (aa > TWOPI) return aa - TWOPI;
-        return aa;
-    }
-
-    public class Ball extends RK41DObject {
-        public float nr, nx, ny, // Normalized radius and coordinates
-        direction;
-        public int counter = 3;
-
-        public Ball(float _r, float _x, float _y, float _a) {
-            this.nr = _r;
-            this.nx = _x;
-            this.ny = _y;
-
-            this.direction = _a;
-            this.state.u = 0;
-            this.state.s = 1f;
-        }
-
-        public void draw(Canvas canvas) {
-            float x = LEFT_BORDER + this.nx * SCALE;
-            float y = BOTTOM_BORDER - this.ny * SCALE;
-            float r = this.nr * SCALE;
-
-            mPaint.setColor(Color.WHITE);
-            mPaint.setStyle(Style.FILL);
-            mPaint.setStrokeWidth(0);
-
-            canvas.drawOval(new RectF(x-r, y-r, x + r, y + r), mPaint);
-
-            mPaint.setAntiAlias(false);
-
-            switch(this.counter) {
+        switch(ball.counter) {
             case 1: {
                 mPaint.setColor(Color.BLACK);
                 canvas.drawRect(
@@ -520,124 +447,20 @@ public class DontYouFillItView extends View implements OnTouchListener {
                         y+r*0.15f,
                         mPaint);
             } break;
-            }
-            mPaint.setAntiAlias(true);
         }
+        mPaint.setAntiAlias(true);
+    }
 
+    class RefreshHandler extends Handler {
         @Override
-        protected float acceleration(State s, float t) {
-            return -0.4f;
+        public void handleMessage(Message msg) {
+            DontYouFillItView.this.update();
+            DontYouFillItView.this.invalidate(); // Mark the view as 'dirty'
         }
 
-        void update(float t, float dt) {
-            State previousState = new State(state);
-
-            integrate(state, t, dt);
-
-            float d = state.u - previousState.u;
-
-            nx += d * Math.cos(direction);
-            ny += d * Math.sin(direction);
-
-            bounce();
-        }
-
-        public void bounce() {
-            if (this.nx > 1 - this.nr) {
-                this.nx = 1 - this.nr;
-                this.direction = normalizeRadian((float)(Math.PI - direction));
-            } else if (this.nx < this.nr) {
-                this.nx = this.nr;
-                this.direction = normalizeRadian((float)(Math.PI - direction));
-            }
-
-            if (this.ny > 1 - this.nr) {
-                this.ny = 1 - this.nr;
-                this.direction = normalizeRadian((float)(-this.direction));
-            }
-
-            Iterator<Ball> itr = mListBalls.iterator();
-
-            while(itr.hasNext()) {
-                Ball o = itr.next();
-
-                // Vector joining the two balls
-                V2D normal = new V2D(this.nx - o.nx, this.ny - o.ny);
-                if(normal.mag() <= o.nr + this.nr) {
-                    --o.counter;
-
-                    float alpha = (float) Math.atan2(normal.y, normal.x);
-                    float sine = (float) Math.sin(alpha);
-                    float cosine = (float) Math.cos(alpha);
-
-                    //Log.v("ALPHA", "" + (int)(alpha * 180 / Math.PI));
-                    //this.ballState = BallState.Stopped;
-
-                    //state.s = 0;
-
-                    V2D velocity = new V2D((float) Math.cos(this.direction), (float) Math.sin(this.direction));
-
-                    V2D bTemp = new V2D(
-                            cosine * normal.x + sine * normal.y,
-                            cosine * normal.y - sine * normal.x
-                            );
-
-                    V2D vTemp = new V2D(
-                            cosine * velocity.x + sine * velocity.y,
-                            cosine * velocity.y - sine * velocity.x
-                            );
-
-                    V2D vFinal = new V2D(-vTemp.x, vTemp.y);
-
-                    bTemp.x += vFinal.x / SCALE;
-
-                    V2D bFinal = new V2D();
-                    bFinal.x = cosine * bTemp.x - sine * bTemp.y;
-                    bFinal.y = cosine * bTemp.y + sine * bTemp.x;
-
-                    this.nx = o.nx + bFinal.x;
-                    this.ny = o.ny + bFinal.y;
-
-                    velocity.x = cosine * vFinal.x - sine * vFinal.y;
-                    velocity.y = cosine * vFinal.y + sine * vFinal.x;
-
-                    this.direction = (float) Math.atan2(velocity.y, velocity.x);
-
-                    if(o.counter == 0) {
-                        mScore += 1;
-                        itr.remove();
-                    }
-                }
-            }
-        }
-
-        public void grow() {
-            Iterator<Ball> itr = mListBalls.iterator();
-            float minRadius = Float.MAX_VALUE;
-            float available;
-            Ball o;
-            V2D vector;
-
-            while(itr.hasNext()) {
-                o = itr.next();
-                vector = new V2D(mCurrentBall.nx - o.nx, mCurrentBall.ny - o.ny);
-                available = vector.mag() - o.nr;
-                if(minRadius > available) minRadius = available;
-            }
-
-            available = this.nx;
-            if(minRadius > available) minRadius = available;
-
-            available = 1 - this.nx;
-            if(minRadius > available) minRadius = available;
-
-            available = Math.abs(this.ny);
-            if(minRadius > available) minRadius = available;
-
-            available = Math.abs(1 - this.ny);
-            if(minRadius > available) minRadius = available;
-
-            this.nr = Math.abs(minRadius);
+        public void sleep(long delay) {
+            this.removeMessages(0);
+            this.sendMessageDelayed(obtainMessage(0), delay);
         }
     }
 }

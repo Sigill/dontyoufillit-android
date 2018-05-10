@@ -52,10 +52,10 @@ public abstract class RK41DObject {
         Derivative c = evaluate(state, t, dt * 0.5f, b);
         Derivative d = evaluate(state, t, dt, c);
 
-        final float dxdt = 1.0f/6.0f * (a.du + 2.0f * (b.du + c.du) + d.du);
-        final float dvdt = 1.0f/6.0f * (a.ds + 2.0f * (b.ds + c.ds) + d.ds);
+        final float dudt = 1.0f/6.0f * (a.du + 2.0f * (b.du + c.du) + d.du);
+        final float dsdt = 1.0f/6.0f * (a.ds + 2.0f * (b.ds + c.ds) + d.ds);
 
-        state.u = state.u + dxdt * dt;
-        state.s = state.s + dvdt * dt;
+        state.u = state.u + dudt * dt;
+        state.s = state.s + dsdt * dt;
     }
 }
