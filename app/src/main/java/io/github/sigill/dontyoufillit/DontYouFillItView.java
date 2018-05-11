@@ -310,9 +310,9 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
 
         canvas.drawRect(
                 H_OFFSET + (SCALE - CANNON_BASE_WIDTH) / 2.0f,
-                BOTTOM_BORDER + SCALE / 6.0f,
-                H_OFFSET + (SCALE - CANNON_BASE_WIDTH) / 2.0f + CANNON_BASE_WIDTH,
                 BOTTOM_BORDER + SCALE / 6.0f - CANNON_BASE_HEIGHT,
+                H_OFFSET + (SCALE - CANNON_BASE_WIDTH) / 2.0f + CANNON_BASE_WIDTH,
+                BOTTOM_BORDER + SCALE / 6.0f,
                 mPaint
         );
 
@@ -373,10 +373,10 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
                         y-r*0.15f,
                         mPaint);
                 canvas.drawRect(
-                        x+r*0.5f,
-                        y+r*0.3f,
                         x-r*0.1f,
                         y+r*0.15f,
+                        x+r*0.5f,
+                        y+r*0.3f,
                         mPaint);
             } break;
             case 3: {
@@ -396,9 +396,9 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
                         mPaint);
                 canvas.drawRect(
                         x-r*0.5f,
-                        y+r*0.3f,
-                        x+r*0.1f,
                         y+r*0.15f,
+                        x+r*0.1f,
+                        y+r*0.3f,
                         mPaint);
             } break;
         }

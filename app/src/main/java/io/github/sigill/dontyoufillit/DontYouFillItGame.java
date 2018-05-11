@@ -89,9 +89,9 @@ public class DontYouFillItGame extends Observable {
 
     public void fire() {
         this.currentBall = new Ball(
-                1 / 40.0f,
+                DEFAULT_BALL_RADIUS,
                 0.5f + (float) Math.cos(this.cannon.getAngle()) * CANNON_LENGTH,
-                -1 / 6.0f + CANNON_BASE_HEIGHT + (float) Math.sin(this.cannon.getAngle()) * CANNON_LENGTH,
+                CANNON_Y_POSITION + CANNON_BASE_HEIGHT + (float) Math.sin(this.cannon.getAngle()) * CANNON_LENGTH,
                 this.cannon.getAngle());
     }
 }
