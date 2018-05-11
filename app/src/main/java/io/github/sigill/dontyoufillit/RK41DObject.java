@@ -8,52 +8,49 @@ public abstract class RK41DObject {
             s = 0;
         }
 
-        public State(State state) {
-            u = state.u;
-            s = state.s;
+        public State(float _u, float _s) {
+            u = _u;
+            s = _s;
         }
     }
 
     class Derivative {
-        public float du, ds;
-        public Derivative() {
-            du = 0;
-            ds = 0;
-        }
+        public float du = 0.0f, ds = 0.0f;
+        public Derivative() {}
     }
 
-    protected State state = new State();
+    private final static float one_sixth = 1/6.0f;
 
-    protected abstract float acceleration(State s, float t);
+    protected final State state = new State();
 
-    private Derivative evaluate(State initial, float t) {
-        Derivative output = new Derivative();
-        output.du = initial.s;
-        output.ds = acceleration(initial, t);
-        return output;
+    private final Derivative a = new Derivative();
+    private final Derivative b = new Derivative();
+    private final Derivative c = new Derivative();
+    private final Derivative d = new Derivative();
+
+    protected abstract float acceleration(final State s, final float t);
+
+    private void evaluate(final State initial, final float t, Derivative out) {
+        out.du = initial.s;
+        out.ds = acceleration(initial, t);
     }
 
-    private Derivative evaluate(State initial, float t, float dt, Derivative d)
+    private void evaluate(final State initial, final float t, final float dt, final Derivative d, Derivative out)
     {
-        State state = new State();
-        state.u = initial.u + d.du * dt;
-        state.s = initial.s + d.ds * dt;
-
-        Derivative output = new Derivative();
-        output.du = state.s;
-        output.ds = acceleration(state, t+dt);
-        return output;
+        State state = new State(initial.u + d.du * dt, initial.s + d.ds * dt);
+        out.du = state.s;
+        out.ds = acceleration(state, t+dt);
     }
 
-    public void integrate(State state, float t, float dt)
+    public void integrate(final State state, final float t, final float dt)
     {
-        Derivative a = evaluate(state, t);
-        Derivative b = evaluate(state, t, dt * 0.5f, a);
-        Derivative c = evaluate(state, t, dt * 0.5f, b);
-        Derivative d = evaluate(state, t, dt, c);
+        evaluate(state, t, a);
+        evaluate(state, t, dt * 0.5f, a, b);
+        evaluate(state, t, dt * 0.5f, b, c);
+        evaluate(state, t, dt, c, d);
 
-        final float dudt = 1.0f/6.0f * (a.du + 2.0f * (b.du + c.du) + d.du);
-        final float dsdt = 1.0f/6.0f * (a.ds + 2.0f * (b.ds + c.ds) + d.ds);
+        final float dudt = one_sixth * (a.du + 2.0f * (b.du + c.du) + d.du);
+        final float dsdt = one_sixth * (a.ds + 2.0f * (b.ds + c.ds) + d.ds);
 
         state.u = state.u + dudt * dt;
         state.s = state.s + dsdt * dt;

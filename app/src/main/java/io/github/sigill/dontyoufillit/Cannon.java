@@ -10,7 +10,7 @@ public class Cannon extends RK41DObject {
     }
 
     @Override
-    public float acceleration(State s, float t) { return 0; }
+    public float acceleration(final State s, final float t) { return 0; }
 
     /*
      * Angle of the cannon. 0 is up, -pi/2 is left, pi/2 is right.

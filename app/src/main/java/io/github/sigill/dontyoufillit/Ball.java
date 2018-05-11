@@ -21,16 +21,14 @@ public class Ball extends RK41DObject {
     }
 
     @Override
-    protected float acceleration(State s, float t) {
-        return -0.4f;
-    }
+    protected float acceleration(final State s, final float t) { return -0.4f; }
 
     void update(float t, float dt, List<Ball> staticBalls) {
-        State previousState = new State(state);
+        float _u = state.u;
 
         integrate(state, t, dt);
 
-        float d = state.u - previousState.u;
+        float d = state.u - _u;
 
         nx += d * Math.cos(direction);
         ny += d * Math.sin(direction);
@@ -38,7 +36,7 @@ public class Ball extends RK41DObject {
         bounce(staticBalls);
     }
 
-    private void bounce(List<Ball> staticBalls) {
+    private void bounce(final List<Ball> staticBalls) {
         if (this.nx > 1 - this.nr) {
             this.nx = 1 - this.nr;
             this.direction = Utils.normalizeRadian((float)(Math.PI - direction));
@@ -52,9 +50,13 @@ public class Ball extends RK41DObject {
             this.direction = Utils.normalizeRadian(-this.direction);
         }
 
-        for(Ball o : staticBalls) {
+        V2D normal = new V2D();
+
+        for(final Ball o : staticBalls) {
             // Vector joining the two balls
-            V2D normal = new V2D(this.nx - o.nx, this.ny - o.ny);
+            normal.x = this.nx - o.nx;
+            normal.y = this.ny - o.ny;
+
             float dist = normal.mag();
             if(normal.mag() <= o.nr + this.nr) {
                 --o.counter;
@@ -78,13 +80,15 @@ public class Ball extends RK41DObject {
         }
     }
 
-    public void grow(List<Ball> staticBalls) {
+    public void grow(final List<Ball> staticBalls) {
         float minRadius = Float.MAX_VALUE;
         float available;
-        V2D vector;
+        V2D vector = new V2D();
 
-        for (Ball o : staticBalls) {
-            vector = new V2D(this.nx - o.nx, this.ny - o.ny);
+        for (final Ball o : staticBalls) {
+            vector.x = this.nx - o.nx;
+            vector.y = this.ny - o.ny;
+
             available = vector.mag() - o.nr;
             if(minRadius > available) minRadius = available;
         }

@@ -9,22 +9,23 @@ import android.graphics.Paint;
 import android.graphics.Paint.FontMetrics;
 import android.graphics.Paint.Style;
 import android.graphics.Path;
+import android.graphics.PathEffect;
 import android.graphics.RectF;
-import android.os.Handler;
-import android.os.Message;
 import android.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.Choreographer;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Observable;
+import java.util.Observer;
 
-public class DontYouFillItView extends View implements OnTouchListener {
-    protected static final int FPS = 60;
+public class DontYouFillItView extends View implements OnTouchListener, Observer, Choreographer.FrameCallback {
     private static final String HIGHSCORE_PREF = "highscore";
+
+    DontYouFillItGame game = null;
 
     public enum Mode {PAUSE, RUNNING, GAMEOVER}
     private Mode mCurrentMode = Mode.RUNNING;
@@ -33,30 +34,21 @@ public class DontYouFillItView extends View implements OnTouchListener {
     BOTTOM_BORDER, TOP_BORDER, LEFT_BORDER, RIGHT_BORDER,
     CANNON_BASE_WIDTH, CANNON_BASE_HEIGHT, CANNON_LENGTH, CANNON_WIDTH;
 
-    /** Keeps the game thread alive */
-    private boolean mContinue = true;
-
     /** Timestamp of the last frame created */
     private long mLastFrameTimestamp = 0, mCurrentFrameTimestamp = 0, mLastTouchTimestamp = 0;
 
     /** Paint object */
     private final Paint mPaint = new Paint();
+    private final PathEffect mDottedEffect = new DashPathEffect(new float[] {2, 2}, 0);
+    private final Path mMainBorder = new Path(), mBottomBorder = new Path();
+    private FontMetrics mFontMetric = null;
 
-    private Cannon mCannon = new Cannon();
-    private ArrayList<Ball> mListBalls = new ArrayList<Ball>();
-    private Ball mCurrentBall = null;
-    private int mScore = 0;
     private int mHighScore = 0;
 
     private int fpsCounter = 0;
     private long fpsCounterStart = System.currentTimeMillis();
 
-    private int updateCounter = 0;
-    private long updateCounterStart = System.currentTimeMillis();
-
-    private RefreshHandler mRedrawHandler = new RefreshHandler();
-
-    DontYouFillItView(Context context) {
+    public DontYouFillItView(Context context) {
         super(context);
         initView();
     }
@@ -75,19 +67,71 @@ public class DontYouFillItView extends View implements OnTouchListener {
         setOnTouchListener(this);
         setFocusable(true);
 
+        game = new DontYouFillItGame();
+        game.addObserver(this);
+
         Context ctx = this.getContext();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
         this.mHighScore = prefs.getInt(HIGHSCORE_PREF, 0);
 
         mPaint.setAntiAlias(true);
 
-        resetGame();
+        reset();
     }
 
-    private void resetGame() {
-        this.mCurrentBall = null;
-        this.mListBalls.clear();
-        this.mScore = 0;
+    public void setMode(Mode newMode) {
+        mCurrentMode = newMode;
+
+        if (mCurrentMode == Mode.RUNNING) {
+            Choreographer.getInstance().postFrameCallback(this);
+        } else {
+            Choreographer.getInstance().removeFrameCallback(this);
+        }
+    }
+
+    private void reset() {
+        game.reset();
+        resume();
+    }
+
+    public void resume() {
+        mLastFrameTimestamp = System.currentTimeMillis();
+        mCurrentFrameTimestamp = mLastFrameTimestamp;
+
+        this.fpsCounter = 0;
+        this.fpsCounterStart = mLastFrameTimestamp;
+
+        game.resume();
+
+        setMode(Mode.RUNNING);
+    }
+
+    public void pause() {
+        setMode(Mode.PAUSE);
+    }
+
+    @Override
+    public void doFrame(long l) {
+        invalidate();
+        Choreographer.getInstance().postFrameCallback(this);
+    }
+
+    @Override
+    public void update(Observable observable, Object o) {
+        switch(game.state) {
+            case GAMEOVER:
+                if(game.score > this.mHighScore) {
+                    this.mHighScore = game.score;
+
+                    Context ctx = this.getContext();
+                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
+                    SharedPreferences.Editor editor = prefs.edit();
+                    editor.putInt(HIGHSCORE_PREF, this.mHighScore);
+                    editor.commit();
+                }
+                setMode(Mode.GAMEOVER);
+                break;
+        }
     }
 
     protected void computeLayout() {
@@ -114,23 +158,24 @@ public class DontYouFillItView extends View implements OnTouchListener {
         this.CANNON_BASE_HEIGHT = this.SCALE / 15.0f;
         this.CANNON_LENGTH = this.SCALE / 15.0f;
         this.CANNON_WIDTH = this.SCALE / 18.0f;
+
+        mMainBorder.reset();
+        mMainBorder.moveTo(this.LEFT_BORDER, this.BOTTOM_BORDER);
+        mMainBorder.lineTo(this.LEFT_BORDER, this.TOP_BORDER);
+        mMainBorder.lineTo(this.RIGHT_BORDER, this.TOP_BORDER);
+        mMainBorder.lineTo(this.RIGHT_BORDER, this.BOTTOM_BORDER);
+
+        mBottomBorder.reset();
+        mBottomBorder.moveTo(this.LEFT_BORDER, this.BOTTOM_BORDER);
+        mBottomBorder.lineTo(this.RIGHT_BORDER, this.BOTTOM_BORDER);
+
+        mFontMetric = mPaint.getFontMetrics();
     }
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
         computeLayout();
-    }
-
-    public void setMode(Mode newMode) {
-        mCurrentMode = newMode;
-
-        if (mCurrentMode == Mode.RUNNING) {
-            mContinue = true;
-            update();
-        } else {
-            mContinue = false;
-        }
     }
 
     @Override
@@ -141,11 +186,10 @@ public class DontYouFillItView extends View implements OnTouchListener {
         if(previousTouchTimestamp > this.mLastTouchTimestamp - 500)
             return true;
 
-        //Log.v("Touch", "X = " + e.getX() + ", Y = " + e.getY());
+//        Log.v("Touch", "X = " + e.getX() + ", Y = " + e.getY());
 
         if(this.mCurrentMode == Mode.GAMEOVER) {
-            resetGame();
-            resume();
+            reset();
             return true;
         }
 
@@ -154,12 +198,8 @@ public class DontYouFillItView extends View implements OnTouchListener {
             return true;
         }
 
-        if(this.mCurrentMode == Mode.RUNNING && this.mCurrentBall == null) {
-            this.mCurrentBall = new Ball(
-                    1 / 40.0f,
-                    0.5f + (float) Math.cos(this.mCannon.getAngle()) * CANNON_LENGTH / SCALE,
-                    -1 / 6.0f + CANNON_BASE_HEIGHT / SCALE + (float) Math.sin(this.mCannon.getAngle()) * CANNON_LENGTH / SCALE,
-                    this.mCannon.getAngle());
+        if(this.mCurrentMode == Mode.RUNNING && game.currentBall == null) {
+            game.fire();
             return true;
         }
 
@@ -172,89 +212,11 @@ public class DontYouFillItView extends View implements OnTouchListener {
     }
 
     public void update() {
-        if(getHeight() == 0 || getWidth() == 0) {
-            mRedrawHandler.sleep(1000 / FPS);
-            return;
-        }
-
         mCurrentFrameTimestamp = System.currentTimeMillis();
 
-        if(this.mCurrentBall != null) {
-            long last = mLastFrameTimestamp, current;
-            for(int i = 1; i <= 10; ++i) {
-                current = (mLastFrameTimestamp * (10-i) + mCurrentFrameTimestamp * i) / 10;
-
-                this.mCurrentBall.update(last / 1000f, (current - last) / 1000f, mListBalls);
-
-                Iterator<Ball> itr = mListBalls.iterator();
-                while (itr.hasNext()) {
-                    Ball o = itr.next();
-                    if(o.counter == 0) {
-                        mScore += 1;
-                        itr.remove();
-                    }
-                }
-
-                if(this.mCurrentBall.ny < this.mCurrentBall.nr && Utils.normalizeRadian(this.mCurrentBall.direction) > Math.PI) {
-                    this.mCurrentBall.state.s = 0f;
-
-                    if(this.mScore > this.mHighScore) {
-                        this.mHighScore = this.mScore;
-
-                        Context ctx = this.getContext();
-                        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
-                        SharedPreferences.Editor editor = prefs.edit();
-                        editor.putInt(HIGHSCORE_PREF, this.mHighScore);
-                        editor.commit();
-                    }
-
-                    setMode(Mode.GAMEOVER);
-
-                    break;
-                } else if(this.mCurrentBall.state.s < 0.01) {
-                    if(this.mCurrentBall.ny >= 0) {
-                        this.mCurrentBall.grow(mListBalls);
-                        this.mListBalls.add(this.mCurrentBall);
-                    }
-                    this.mCurrentBall = null;
-
-                    break;
-                }
-
-                last = current;
-            }
-        }
-
-        mCannon.update(mLastFrameTimestamp / 1000f, (mCurrentFrameTimestamp - mLastFrameTimestamp) / 1000f);
+        game.update(mCurrentFrameTimestamp);
 
         mLastFrameTimestamp = mCurrentFrameTimestamp;
-
-        long now = System.currentTimeMillis();
-        if(now - this.updateCounterStart < 2000) {
-            this.updateCounter++;
-        } else {
-            Log.v("UPDATE_COUNTER", (int)(this.updateCounter / ((now - this.updateCounterStart) / 1000f)) + "ups");
-            this.updateCounterStart = now;
-            this.updateCounter = 0;
-        }
-
-        // We will take this much time off of the next update() call to normalize for
-        // CPU time used updating the game state.
-        if(mContinue) {
-            long diff = System.currentTimeMillis() - mCurrentFrameTimestamp;
-            mRedrawHandler.sleep(Math.max(0, (1000 / FPS) - diff));
-        }
-    }
-
-    public void resume() {
-        mLastFrameTimestamp = System.currentTimeMillis();
-        mCurrentFrameTimestamp = mLastFrameTimestamp;
-
-        setMode(Mode.RUNNING);
-    }
-
-    public void pause() {
-        setMode(Mode.PAUSE);
     }
 
     /**
@@ -264,31 +226,38 @@ public class DontYouFillItView extends View implements OnTouchListener {
     public void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        if(this.mCurrentMode == Mode.GAMEOVER) {
-            float scoreOffset = mPaint.measureText("Game Over");
-            canvas.drawText("Game Over", (getWidth() - scoreOffset) / 2f, getHeight() / 2f, this.mPaint);
+        final long now = System.currentTimeMillis();
+        final long elapsed = now - this.fpsCounterStart;
+        if (elapsed < 2000) {
+            this.fpsCounter++;
+        } else {
+            Log.v("FPS_COUNTER", (1000 * this.fpsCounter / (elapsed)) + "fps");
+            this.fpsCounterStart = now;
+            this.fpsCounter = 0;
+        }
+
+        if (this.mCurrentMode == Mode.RUNNING) {
+            update();
+        }
+
+        if (this.mCurrentMode == Mode.GAMEOVER) {
+            mPaint.setTextAlign(Paint.Align.CENTER);
+//            float scoreOffset = mPaint.measureText("Game Over");
+            canvas.drawText("Game Over", getWidth() / 2f, getHeight() / 2f, this.mPaint);
+            mPaint.setTextAlign(Paint.Align.LEFT);
 
             return;
         }
 
         drawScene(canvas);
 
-        draw(mCannon, canvas);
+        draw(game.cannon, canvas);
 
-        for (Ball b : mListBalls)
+        for (Ball b : game.staticBalls)
             draw(b, canvas);
 
-        if(this.mCurrentBall != null)
-            draw(this.mCurrentBall, canvas);
-
-        long now = System.currentTimeMillis();
-        if(now - this.fpsCounterStart < 2000) {
-            this.fpsCounter++;
-        } else {
-            Log.v("FPS_COUNTER", (int)(this.fpsCounter / ((now - this.fpsCounterStart) / 1000f)) + "fps");
-            this.fpsCounterStart = now;
-            this.fpsCounter = 0;
-        }
+        if(game.currentBall != null)
+            draw(game.currentBall, canvas);
     }
 
     private void drawScene(Canvas canvas) {
@@ -300,19 +269,11 @@ public class DontYouFillItView extends View implements OnTouchListener {
         mPaint.setStyle(Style.STROKE);
         mPaint.setStrokeWidth(2);
 
-        Path mainPath = new Path();
-        mainPath.moveTo(this.LEFT_BORDER, this.BOTTOM_BORDER);
-        mainPath.lineTo(this.LEFT_BORDER, this.TOP_BORDER);
-        mainPath.lineTo(this.RIGHT_BORDER, this.TOP_BORDER);
-        mainPath.lineTo(this.RIGHT_BORDER, this.BOTTOM_BORDER);
-        canvas.drawPath(mainPath, mPaint); // Bottom
+        canvas.drawPath(mMainBorder, mPaint);
 
-        Path bottomPath = new Path();
-        bottomPath.moveTo(this.LEFT_BORDER, this.BOTTOM_BORDER);
-        bottomPath.lineTo(this.RIGHT_BORDER, this.BOTTOM_BORDER);
-        Paint dashedPaint = new Paint(mPaint);
-        dashedPaint.setPathEffect(new DashPathEffect(new float[] {2, 2}, 0));
-        canvas.drawPath(bottomPath, dashedPaint); // Bottom
+        mPaint.setPathEffect(mDottedEffect);
+        canvas.drawPath(mBottomBorder, mPaint); // Bottom
+        mPaint.setPathEffect(null);
 
         mPaint.setStyle(Style.FILL);
         mPaint.setStrokeWidth(0);
@@ -335,14 +296,12 @@ public class DontYouFillItView extends View implements OnTouchListener {
         mPaint.setColor(Color.WHITE);
         mPaint.setTextSize((float) (this.SCALE/12.0));
 
-        FontMetrics fmi = mPaint.getFontMetrics();
-
-        canvas.drawText("Highscore", LEFT_BORDER, (float)(V_OFFSET + this.SCALE/12.0 - fmi.descent), mPaint);
-        canvas.drawText("Score", LEFT_BORDER, (float)(V_OFFSET + this.SCALE/6.0 - fmi.descent), mPaint);
+        canvas.drawText("Highscore", LEFT_BORDER, (float)(V_OFFSET + this.SCALE/12.0 - mFontMetric.descent), mPaint);
+        canvas.drawText("Score", LEFT_BORDER, (float)(V_OFFSET + this.SCALE/6.0 - mFontMetric.descent), mPaint);
 
         float scoreOffset = mPaint.measureText("Highscore ");
-        canvas.drawText(String.valueOf(this.mHighScore), LEFT_BORDER + scoreOffset, (float)(V_OFFSET + this.SCALE/12.0 - fmi.descent), mPaint);
-        canvas.drawText(String.valueOf(this.mScore), LEFT_BORDER + scoreOffset, (float)(V_OFFSET + this.SCALE/6.0 - fmi.descent), mPaint);
+        canvas.drawText(String.valueOf(this.mHighScore), LEFT_BORDER + scoreOffset, (float)(V_OFFSET + this.SCALE/12.0 - mFontMetric.descent), mPaint);
+        canvas.drawText(String.valueOf(game.score), LEFT_BORDER + scoreOffset, (float)(V_OFFSET + this.SCALE/6.0 - mFontMetric.descent), mPaint);
     }
 
     private void draw(Cannon cannon, Canvas canvas) {
@@ -449,18 +408,5 @@ public class DontYouFillItView extends View implements OnTouchListener {
             } break;
         }
         mPaint.setAntiAlias(true);
-    }
-
-    class RefreshHandler extends Handler {
-        @Override
-        public void handleMessage(Message msg) {
-            DontYouFillItView.this.update();
-            DontYouFillItView.this.invalidate(); // Mark the view as 'dirty'
-        }
-
-        public void sleep(long delay) {
-            this.removeMessages(0);
-            this.sendMessageDelayed(obtainMessage(0), delay);
-        }
     }
 }
