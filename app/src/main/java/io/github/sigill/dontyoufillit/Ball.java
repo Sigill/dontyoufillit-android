@@ -21,12 +21,12 @@ public class Ball extends RK41DObject {
     }
 
     @Override
-    protected float acceleration(final State s, final float t) { return -0.4f; }
+    protected float acceleration() { return -0.4f; }
 
-    void update(float t, float dt, List<Ball> staticBalls) {
+    void update(float dt, List<Ball> staticBalls) {
         float _u = state.u;
 
-        integrate(state, t, dt);
+        integrate(state, dt);
 
         float d = state.u - _u;
 
@@ -50,24 +50,22 @@ public class Ball extends RK41DObject {
             this.direction = Utils.normalizeRadian(-this.direction);
         }
 
-        V2D normal = new V2D();
-
         for(final Ball o : staticBalls) {
             // Vector joining the two balls
-            normal.x = this.nx - o.nx;
-            normal.y = this.ny - o.ny;
+            final float dx = this.nx - o.nx;
+            final float dy = this.ny - o.ny;
+            final float dist = Utils.vectorLength(dx, dy);
 
-            float dist = normal.mag();
-            if(normal.mag() <= o.nr + this.nr) {
+            if(dist <= o.nr + this.nr) {
                 --o.counter;
 
                 // Move it back to prevent clipping
-                this.nx = o.nx + normal.x * (this.nr + o.nr) / dist;
-                this.ny = o.ny + normal.y * (this.nr + o.nr) / dist;
+                this.nx = o.nx + dx * (this.nr + o.nr) / dist;
+                this.ny = o.ny + dy * (this.nr + o.nr) / dist;
 
                 // http://en.wikipedia.org/wiki/Elastic_collision#Two-Dimensional_Collision_With_Two_Moving_Objects
                 // Assuming no speed and an infinite mass for the second ball.
-                float phi = (float)Math.atan2(normal.y, normal.x),
+                float phi = (float)Math.atan2(dy, dx),
                     theta = this.direction,
                     speed = this.state.s;
 
@@ -83,13 +81,13 @@ public class Ball extends RK41DObject {
     public void grow(final List<Ball> staticBalls) {
         float minRadius = Float.MAX_VALUE;
         float available;
-        V2D vector = new V2D();
 
         for (final Ball o : staticBalls) {
-            vector.x = this.nx - o.nx;
-            vector.y = this.ny - o.ny;
+            final float dx = this.nx - o.nx;
+            final float dy = this.ny - o.ny;
+            final float dist = Utils.vectorLength(dx, dy);
 
-            available = vector.mag() - o.nr;
+            available = dist - o.nr;
             if(minRadius > available) minRadius = available;
         }
 

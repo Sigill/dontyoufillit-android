@@ -47,14 +47,13 @@ public class DontYouFillItGame extends Observable {
     }
 
     public void update(long time) {
-//        Log.v("UPDATE", "at: " + time);
         if (this.currentBall != null) {
             long last = this.lastUpdateTime,
                 steps = time - this.lastUpdateTime,
               current;
             for(int i = 1; i <= steps; ++i) {
                 current = (this.lastUpdateTime * (steps-i) + time * i) / steps;
-                this.currentBall.update(last / 1000f, (current - last) / 1000f, this.staticBalls);
+                this.currentBall.update((current - last) / 1000f, this.staticBalls);
 
                 Iterator<Ball> itr = this.staticBalls.iterator();
                 while (itr.hasNext()) {
@@ -83,7 +82,7 @@ public class DontYouFillItGame extends Observable {
             }
         }
 
-        this.cannon.update(this.lastUpdateTime / 1000f, (time - this.lastUpdateTime) / 1000f);
+        this.cannon.update((time - this.lastUpdateTime) / 1000f);
 
         this.lastUpdateTime = time;
     }

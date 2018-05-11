@@ -253,7 +253,7 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
 
         draw(game.cannon, canvas);
 
-        for (Ball b : game.staticBalls)
+        for (final Ball b : game.staticBalls)
             draw(b, canvas);
 
         if(game.currentBall != null)
@@ -316,15 +316,10 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
                 mPaint
         );
 
-        canvas.drawOval(
-                new RectF(
-                        H_OFFSET + SCALE / 2.0f - CANNON_BASE_WIDTH / 2.0f,
-                        (BOTTOM_BORDER + SCALE / 6.0f - CANNON_BASE_HEIGHT) - CANNON_BASE_WIDTH / 2.0f,
-                        H_OFFSET + SCALE / 2.0f + CANNON_BASE_WIDTH / 2.0f,
-                        (BOTTOM_BORDER + SCALE / 6.0f - CANNON_BASE_HEIGHT) + CANNON_BASE_WIDTH / 2.0f
-                ),
-                mPaint
-        );
+        canvas.drawCircle(H_OFFSET + SCALE / 2.0f,
+                          BOTTOM_BORDER + SCALE / 6.0f - CANNON_BASE_HEIGHT,
+                          CANNON_BASE_WIDTH / 2.0f,
+                          mPaint);
 
         mPaint.setStyle(Style.FILL);
         mPaint.setStrokeWidth(CANNON_WIDTH);
@@ -339,7 +334,7 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
         );
     }
 
-    private void draw(Ball ball, Canvas canvas) {
+    private void draw(final Ball ball, Canvas canvas) {
         float x = LEFT_BORDER + ball.nx * SCALE;
         float y = BOTTOM_BORDER - ball.ny * SCALE;
         float r = ball.nr * SCALE;
@@ -348,7 +343,7 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
         mPaint.setStyle(Style.FILL);
         mPaint.setStrokeWidth(0);
 
-        canvas.drawOval(new RectF(x-r, y-r, x + r, y + r), mPaint);
+        canvas.drawCircle(x, y, r, mPaint);
 
         mPaint.setAntiAlias(false);
 

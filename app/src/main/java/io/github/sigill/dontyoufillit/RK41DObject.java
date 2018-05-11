@@ -1,6 +1,6 @@
 package io.github.sigill.dontyoufillit;
 
-public abstract class RK41DObject {
+public class RK41DObject {
     class State {
         public float u, s;
         public State() {
@@ -28,7 +28,7 @@ public abstract class RK41DObject {
     private final Derivative c = new Derivative();
     private final Derivative d = new Derivative();
 
-    protected abstract float acceleration(final State s, final float t);
+    protected float acceleration(final State s, final float t) { return 0.0f; }
 
     private void evaluate(final State initial, final float t, Derivative out) {
         out.du = initial.s;
@@ -48,6 +48,33 @@ public abstract class RK41DObject {
         evaluate(state, t, dt * 0.5f, a, b);
         evaluate(state, t, dt * 0.5f, b, c);
         evaluate(state, t, dt, c, d);
+
+        final float dudt = one_sixth * (a.du + 2.0f * (b.du + c.du) + d.du);
+        final float dsdt = one_sixth * (a.ds + 2.0f * (b.ds + c.ds) + d.ds);
+
+        state.u = state.u + dudt * dt;
+        state.s = state.s + dsdt * dt;
+    }
+
+    protected float acceleration() { return 0.0f; }
+
+    private void evaluate(final State initial, Derivative out) {
+        out.du = initial.s;
+        out.ds = acceleration();
+    }
+
+    private void evaluate(final State initial, final float dt, final Derivative d, Derivative out)
+    {
+        out.du = initial.s + d.ds * dt;
+        out.ds = acceleration();
+    }
+
+    public void integrate(final State state, final float dt)
+    {
+        evaluate(state, a);
+        evaluate(state, dt * 0.5f, a, b);
+        evaluate(state, dt * 0.5f, b, c);
+        evaluate(state, dt, c, d);
 
         final float dudt = one_sixth * (a.du + 2.0f * (b.du + c.du) + d.du);
         final float dsdt = one_sixth * (a.ds + 2.0f * (b.ds + c.ds) + d.ds);

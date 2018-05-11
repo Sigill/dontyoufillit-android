@@ -9,4 +9,8 @@ public class Utils {
         if (aa > TWOPI) return aa - TWOPI;
         return aa;
     }
+
+    public static float vectorLength(final float x, final float y) {
+        return (float) Math.sqrt(x * x + y * y);
+    }
 }
