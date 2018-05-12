@@ -35,7 +35,7 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
     CANNON_BASE_WIDTH, CANNON_BASE_HEIGHT, CANNON_LENGTH, CANNON_WIDTH;
 
     /** Timestamp of the last frame created */
-    private long mLastFrameTimestamp = 0, mCurrentFrameTimestamp = 0, mLastTouchTimestamp = 0;
+    private long mLastFrameTimestamp = 0, mLastTouchTimestamp = 0;
 
     /** Paint object */
     private final Paint mPaint = new Paint();
@@ -96,7 +96,6 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
 
     public void resume() {
         mLastFrameTimestamp = System.currentTimeMillis();
-        mCurrentFrameTimestamp = mLastFrameTimestamp;
 
         this.fpsCounter = 0;
         this.fpsCounterStart = mLastFrameTimestamp;
@@ -211,14 +210,6 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
         return true;
     }
 
-    public void update() {
-        mCurrentFrameTimestamp = System.currentTimeMillis();
-
-        game.update(mCurrentFrameTimestamp);
-
-        mLastFrameTimestamp = mCurrentFrameTimestamp;
-    }
-
     /**
      * Paints the game!
      */
@@ -228,17 +219,19 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
 
         final long now = System.currentTimeMillis();
         final long elapsed = now - this.fpsCounterStart;
-        if (elapsed < 2000) {
-            this.fpsCounter++;
-        } else {
+        this.fpsCounter++;
+
+        if (elapsed >= 2000) {
             Log.v("FPS_COUNTER", (1000 * this.fpsCounter / (elapsed)) + "fps");
             this.fpsCounterStart = now;
             this.fpsCounter = 0;
         }
 
         if (this.mCurrentMode == Mode.RUNNING) {
-            update();
+            game.update(now);
         }
+
+        mLastFrameTimestamp = now;
 
         if (this.mCurrentMode == Mode.GAMEOVER) {
             mPaint.setTextAlign(Paint.Align.CENTER);
