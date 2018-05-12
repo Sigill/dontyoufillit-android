@@ -36,7 +36,6 @@ public class GameActivity extends Activity {
     protected void onResume() {
         super.onResume();
         Log.d("GAME_ACTIVITY", "Activity resumed");
-        dontYouFillItView.resume();
     }
 
     /*

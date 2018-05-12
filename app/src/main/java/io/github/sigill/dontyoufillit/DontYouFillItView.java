@@ -10,7 +10,6 @@ import android.graphics.Paint.FontMetrics;
 import android.graphics.Paint.Style;
 import android.graphics.Path;
 import android.graphics.PathEffect;
-import android.graphics.RectF;
 import android.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -74,8 +73,6 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
         this.mHighScore = prefs.getInt(HIGHSCORE_PREF, 0);
 
-        mPaint.setAntiAlias(true);
-
         reset();
     }
 
@@ -85,6 +82,7 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
         if (mCurrentMode == Mode.RUNNING) {
             Choreographer.getInstance().postFrameCallback(this);
         } else {
+            invalidate();
             Choreographer.getInstance().removeFrameCallback(this);
         }
     }
@@ -161,12 +159,12 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
         mMainBorder.reset();
         mMainBorder.moveTo(this.LEFT_BORDER, this.BOTTOM_BORDER);
         mMainBorder.lineTo(this.LEFT_BORDER, this.TOP_BORDER);
-        mMainBorder.lineTo(this.RIGHT_BORDER, this.TOP_BORDER);
-        mMainBorder.lineTo(this.RIGHT_BORDER, this.BOTTOM_BORDER);
+        mMainBorder.lineTo(this.RIGHT_BORDER-1, this.TOP_BORDER);
+        mMainBorder.lineTo(this.RIGHT_BORDER-1, this.BOTTOM_BORDER);
 
         mBottomBorder.reset();
         mBottomBorder.moveTo(this.LEFT_BORDER, this.BOTTOM_BORDER);
-        mBottomBorder.lineTo(this.RIGHT_BORDER, this.BOTTOM_BORDER);
+        mBottomBorder.lineTo(this.RIGHT_BORDER-1, this.BOTTOM_BORDER);
 
         mFontMetric = mPaint.getFontMetrics();
     }
@@ -192,7 +190,11 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
             return true;
         }
 
-        if(this.mCurrentMode == Mode.RUNNING && (e.getX() > getWidth() - 60) && (e.getY() < 60)) {
+        if(this.mCurrentMode == Mode.RUNNING
+                && (e.getX() >= RIGHT_BORDER - SCALE / 6.0f)
+                && (e.getX() <= RIGHT_BORDER)
+                && (e.getY() >= TOP_BORDER - SCALE / 6.0f)
+                && (e.getY() <= TOP_BORDER)) {
             pause();
             return true;
         }
@@ -210,9 +212,6 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
         return true;
     }
 
-    /**
-     * Paints the game!
-     */
     @Override
     public void onDraw(Canvas canvas) {
         super.onDraw(canvas);
@@ -234,8 +233,9 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
         mLastFrameTimestamp = now;
 
         if (this.mCurrentMode == Mode.GAMEOVER) {
+            mPaint.setColor(Color.WHITE);
+            mPaint.setAntiAlias(true);
             mPaint.setTextAlign(Paint.Align.CENTER);
-//            float scoreOffset = mPaint.measureText("Game Over");
             canvas.drawText("Game Over", getWidth() / 2f, getHeight() / 2f, this.mPaint);
             mPaint.setTextAlign(Paint.Align.LEFT);
 
@@ -251,6 +251,21 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
 
         if(game.currentBall != null)
             draw(game.currentBall, canvas);
+
+        if (this.mCurrentMode == Mode.PAUSE) {
+            mPaint.setColor(Color.BLACK);
+            mPaint.setAlpha(220);
+            canvas.drawRect(0, 0,
+                            getWidth(), getHeight(), mPaint);
+
+            mPaint.setColor(Color.WHITE);
+            mPaint.setAlpha(255);
+            mPaint.setAntiAlias(true);
+            mPaint.setTextAlign(Paint.Align.CENTER);
+            canvas.drawText("Pause", getWidth() / 2f, getHeight() / 2f, this.mPaint);
+            mPaint.setTextAlign(Paint.Align.LEFT);
+
+        }
     }
 
     private void drawScene(Canvas canvas) {
@@ -258,9 +273,11 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
         //canvas.drawRect(H_OFFSET, V_OFFSET,
         //                H_OFFSET + SCALE, BOTTOM_BORDER + SCALE/6.0f, mPaint);
 
+        mPaint.setAntiAlias(false);
+
         mPaint.setColor(Color.WHITE);
         mPaint.setStyle(Style.STROKE);
-        mPaint.setStrokeWidth(2);
+        mPaint.setStrokeWidth(0);
 
         canvas.drawPath(mMainBorder, mPaint);
 
@@ -270,24 +287,24 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
 
         mPaint.setStyle(Style.FILL);
         mPaint.setStrokeWidth(0);
-        if(this.mCurrentMode == Mode.RUNNING) {
-            canvas.drawRect(getWidth() - 40, 10,
-                    getWidth() - 30, 40, mPaint);
 
-            canvas.drawRect(getWidth() - 20, 10,
-                    getWidth() - 10, 40, mPaint);
-        } else if(this.mCurrentMode == Mode.PAUSE) {
-            Path path = new Path();
-            path.setFillType(Path.FillType.EVEN_ODD);
-            path.moveTo(getWidth() - 40, 10);
-            path.lineTo(getWidth() - 40, 40);
-            path.lineTo(getWidth() - 10, 25);
-            path.close();
-            canvas.drawPath(path, mPaint);
-        }
+        // Pause button
+        canvas.drawRect(RIGHT_BORDER - SCALE / 6.0f * 0.9f,
+                TOP_BORDER - SCALE / 6.0f * 0.9f,
+                RIGHT_BORDER - SCALE / 6.0f * 0.6f,
+                TOP_BORDER - SCALE / 6.0f * 0.1f,
+                mPaint);
+
+        canvas.drawRect(RIGHT_BORDER - SCALE / 6.0f * 0.4f,
+                TOP_BORDER - SCALE / 6.0f * 0.9f,
+                RIGHT_BORDER - SCALE / 6.0f * 0.1f,
+                TOP_BORDER - SCALE / 6.0f * 0.1f,
+                mPaint);
 
         mPaint.setColor(Color.WHITE);
         mPaint.setTextSize((float) (this.SCALE/12.0));
+
+        mPaint.setAntiAlias(true);
 
         canvas.drawText("Highscore", LEFT_BORDER, (float)(V_OFFSET + this.SCALE/12.0 - mFontMetric.descent), mPaint);
         canvas.drawText("Score", LEFT_BORDER, (float)(V_OFFSET + this.SCALE/6.0 - mFontMetric.descent), mPaint);
@@ -300,6 +317,7 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
     private void draw(Cannon cannon, Canvas canvas) {
         mPaint.setColor(Color.WHITE);
         mPaint.setStyle(Style.FILL);
+        mPaint.setAntiAlias(false);
 
         canvas.drawRect(
                 H_OFFSET + (SCALE - CANNON_BASE_WIDTH) / 2.0f,
@@ -309,6 +327,7 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
                 mPaint
         );
 
+        mPaint.setAntiAlias(true);
         canvas.drawCircle(H_OFFSET + SCALE / 2.0f,
                           BOTTOM_BORDER + SCALE / 6.0f - CANNON_BASE_HEIGHT,
                           CANNON_BASE_WIDTH / 2.0f,
@@ -335,6 +354,8 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
         mPaint.setColor(Color.WHITE);
         mPaint.setStyle(Style.FILL);
         mPaint.setStrokeWidth(0);
+
+        mPaint.setAntiAlias(true);
 
         canvas.drawCircle(x, y, r, mPaint);
 
@@ -395,6 +416,5 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
                         mPaint);
             } break;
         }
-        mPaint.setAntiAlias(true);
     }
 }
