@@ -26,9 +26,6 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
 
     DontYouFillItGame game = null;
 
-    public enum Mode {PAUSE, RUNNING, GAMEOVER}
-    private Mode mCurrentMode = Mode.RUNNING;
-
     private float SCALE, GAME_WIDTH, GAME_HEIGHT, V_OFFSET, H_OFFSET,
     BOTTOM_BORDER, TOP_BORDER, LEFT_BORDER, RIGHT_BORDER,
     CANNON_BASE_WIDTH, CANNON_BASE_HEIGHT, CANNON_LENGTH, CANNON_WIDTH;
@@ -76,17 +73,6 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
         reset();
     }
 
-    public void setMode(Mode newMode) {
-        mCurrentMode = newMode;
-
-        if (mCurrentMode == Mode.RUNNING) {
-            Choreographer.getInstance().postFrameCallback(this);
-        } else {
-            invalidate();
-            Choreographer.getInstance().removeFrameCallback(this);
-        }
-    }
-
     private void reset() {
         game.reset();
         resume();
@@ -100,11 +86,13 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
 
         game.resume();
 
-        setMode(Mode.RUNNING);
+        Choreographer.getInstance().postFrameCallback(this);
     }
 
     public void pause() {
-        setMode(Mode.PAUSE);
+        game.pause();
+        Choreographer.getInstance().removeFrameCallback(this);
+        invalidate();
     }
 
     @Override
@@ -126,7 +114,8 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
                     editor.putInt(HIGHSCORE_PREF, this.mHighScore);
                     editor.commit();
                 }
-                setMode(Mode.GAMEOVER);
+                invalidate();
+                Choreographer.getInstance().removeFrameCallback(this);
                 break;
         }
     }
@@ -185,12 +174,12 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
 
 //        Log.v("Touch", "X = " + e.getX() + ", Y = " + e.getY());
 
-        if(this.mCurrentMode == Mode.GAMEOVER) {
+        if(game.state == DontYouFillItGame.State.GAMEOVER) {
             reset();
             return true;
         }
 
-        if(this.mCurrentMode == Mode.RUNNING
+        if(game.state == DontYouFillItGame.State.RUNNING
                 && (e.getX() >= RIGHT_BORDER - SCALE / 6.0f)
                 && (e.getX() <= RIGHT_BORDER)
                 && (e.getY() >= TOP_BORDER - SCALE / 6.0f)
@@ -199,12 +188,12 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
             return true;
         }
 
-        if(this.mCurrentMode == Mode.RUNNING && game.currentBall == null) {
+        if(game.state == DontYouFillItGame.State.RUNNING && game.currentBall == null) {
             game.fire();
             return true;
         }
 
-        if(this.mCurrentMode == Mode.PAUSE) {
+        if(game.state == DontYouFillItGame.State.PAUSED) {
             resume();
             return true;
         }
@@ -226,13 +215,13 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
             this.fpsCounter = 0;
         }
 
-        if (this.mCurrentMode == Mode.RUNNING) {
+        if (game.state == DontYouFillItGame.State.RUNNING) {
             game.update(now);
         }
 
         mLastFrameTimestamp = now;
 
-        if (this.mCurrentMode == Mode.GAMEOVER) {
+        if (game.state == DontYouFillItGame.State.GAMEOVER) {
             mPaint.setColor(Color.WHITE);
             mPaint.setAntiAlias(true);
             mPaint.setTextAlign(Paint.Align.CENTER);
@@ -252,7 +241,7 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
         if(game.currentBall != null)
             draw(game.currentBall, canvas);
 
-        if (this.mCurrentMode == Mode.PAUSE) {
+        if (game.state == DontYouFillItGame.State.PAUSED) {
             mPaint.setColor(Color.BLACK);
             mPaint.setAlpha(220);
             canvas.drawRect(0, 0,
