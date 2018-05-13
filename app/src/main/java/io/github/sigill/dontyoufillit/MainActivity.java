@@ -70,4 +70,16 @@ public class MainActivity extends Activity {
 
         mWebView.loadUrl("file:///android_asset/play.html");
     }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mWebView.setVisibility(View.INVISIBLE);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mWebView.setVisibility(View.VISIBLE);
+    }
 }
