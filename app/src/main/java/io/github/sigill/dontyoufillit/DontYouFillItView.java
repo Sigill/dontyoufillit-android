@@ -1,7 +1,6 @@
 package io.github.sigill.dontyoufillit;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.DashPathEffect;
@@ -10,36 +9,27 @@ import android.graphics.Paint.FontMetrics;
 import android.graphics.Paint.Style;
 import android.graphics.Path;
 import android.graphics.PathEffect;
-import android.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.Choreographer;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnTouchListener;
 
-import java.util.Observable;
-import java.util.Observer;
-
-public class DontYouFillItView extends View implements OnTouchListener, Observer, Choreographer.FrameCallback {
-    private static final String HIGHSCORE_PREF = "highscore";
-
-    DontYouFillItGame game = null;
+public class DontYouFillItView extends View {
+    private DontYouFillItGame mGame = null;
+    private Integer mHighScore = new Integer(0);
 
     private float SCALE, GAME_WIDTH, GAME_HEIGHT, V_OFFSET, H_OFFSET,
     BOTTOM_BORDER, TOP_BORDER, LEFT_BORDER, RIGHT_BORDER,
     CANNON_BASE_WIDTH, CANNON_BASE_HEIGHT, CANNON_LENGTH, CANNON_WIDTH;
 
     /** Timestamp of the last frame created */
-    private long mLastFrameTimestamp = 0, mLastTouchTimestamp = 0;
+    private long mLastFrameTimestamp = 0;
 
     /** Paint object */
     private final Paint mPaint = new Paint();
     private final PathEffect mDottedEffect = new DashPathEffect(new float[] {2, 2}, 0);
     private final Path mMainBorder = new Path(), mBottomBorder = new Path();
     private FontMetrics mFontMetric = null;
-
-    private int mHighScore = 0;
 
     private int fpsCounter = 0;
     private long fpsCounterStart = System.currentTimeMillis();
@@ -60,21 +50,12 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
     }
 
     private void initView() {
-        setOnTouchListener(this);
         setFocusable(true);
-
-        game = new DontYouFillItGame();
-        game.addObserver(this);
-
-        Context ctx = this.getContext();
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
-        this.mHighScore = prefs.getInt(HIGHSCORE_PREF, 0);
 
         reset();
     }
 
     private void reset() {
-        game.reset();
         resume();
     }
 
@@ -84,40 +65,14 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
         this.fpsCounter = 0;
         this.fpsCounterStart = mLastFrameTimestamp;
 
-        game.resume();
-
-        Choreographer.getInstance().postFrameCallback(this);
     }
 
-    public void pause() {
-        game.pause();
-        Choreographer.getInstance().removeFrameCallback(this);
-        invalidate();
+    public void setGame(DontYouFillItGame game) {
+        mGame = game;
     }
 
-    @Override
-    public void doFrame(long l) {
-        invalidate();
-        Choreographer.getInstance().postFrameCallback(this);
-    }
-
-    @Override
-    public void update(Observable observable, Object o) {
-        switch(game.state) {
-            case GAMEOVER:
-                if(game.score > this.mHighScore) {
-                    this.mHighScore = game.score;
-
-                    Context ctx = this.getContext();
-                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
-                    SharedPreferences.Editor editor = prefs.edit();
-                    editor.putInt(HIGHSCORE_PREF, this.mHighScore);
-                    editor.commit();
-                }
-                invalidate();
-                Choreographer.getInstance().removeFrameCallback(this);
-                break;
-        }
+    public void setHighscore(Integer highscore) {
+        mHighScore = highscore;
     }
 
     protected void computeLayout() {
@@ -164,46 +119,19 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
         computeLayout();
     }
 
-    @Override
-    public boolean onTouch(View arg0, MotionEvent e) {
-        long previousTouchTimestamp = this.mLastTouchTimestamp;
-        this.mLastTouchTimestamp = System.currentTimeMillis();
-
-        if(previousTouchTimestamp > this.mLastTouchTimestamp - 500)
-            return true;
-
-//        Log.v("Touch", "X = " + e.getX() + ", Y = " + e.getY());
-
-        if(game.state == DontYouFillItGame.State.GAMEOVER) {
-            reset();
-            return true;
-        }
-
-        if(game.state == DontYouFillItGame.State.RUNNING
-                && (e.getX() >= RIGHT_BORDER - SCALE / 6.0f)
+    public boolean onPauseButton(MotionEvent e) {
+        return (e.getX() >= RIGHT_BORDER - SCALE / 6.0f)
                 && (e.getX() <= RIGHT_BORDER)
                 && (e.getY() >= TOP_BORDER - SCALE / 6.0f)
-                && (e.getY() <= TOP_BORDER)) {
-            pause();
-            return true;
-        }
-
-        if(game.state == DontYouFillItGame.State.RUNNING && game.currentBall == null) {
-            game.fire();
-            return true;
-        }
-
-        if(game.state == DontYouFillItGame.State.PAUSED) {
-            resume();
-            return true;
-        }
-
-        return true;
+                && (e.getY() <= TOP_BORDER);
     }
 
     @Override
     public void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+
+        if (mGame == null)
+            return;
 
         final long now = System.currentTimeMillis();
         final long elapsed = now - this.fpsCounterStart;
@@ -215,13 +143,9 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
             this.fpsCounter = 0;
         }
 
-        if (game.state == DontYouFillItGame.State.RUNNING) {
-            game.update(now);
-        }
-
         mLastFrameTimestamp = now;
 
-        if (game.state == DontYouFillItGame.State.GAMEOVER) {
+        if (mGame.state == DontYouFillItGame.State.GAMEOVER) {
             mPaint.setColor(Color.WHITE);
             mPaint.setAntiAlias(true);
             mPaint.setTextAlign(Paint.Align.CENTER);
@@ -233,15 +157,15 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
 
         drawScene(canvas);
 
-        draw(game.cannon, canvas);
+        draw(mGame.cannon, canvas);
 
-        for (final Ball b : game.staticBalls)
+        for (final Ball b : mGame.staticBalls)
             draw(b, canvas);
 
-        if(game.currentBall != null)
-            draw(game.currentBall, canvas);
+        if(mGame.currentBall != null)
+            draw(mGame.currentBall, canvas);
 
-        if (game.state == DontYouFillItGame.State.PAUSED) {
+        if (mGame.state == DontYouFillItGame.State.PAUSED) {
             mPaint.setColor(Color.BLACK);
             mPaint.setAlpha(220);
             canvas.drawRect(0, 0,
@@ -300,7 +224,7 @@ public class DontYouFillItView extends View implements OnTouchListener, Observer
 
         float scoreOffset = mPaint.measureText("Highscore ");
         canvas.drawText(String.valueOf(this.mHighScore), LEFT_BORDER + scoreOffset, (float)(V_OFFSET + this.SCALE/12.0 - mFontMetric.descent), mPaint);
-        canvas.drawText(String.valueOf(game.score), LEFT_BORDER + scoreOffset, (float)(V_OFFSET + this.SCALE/6.0 - mFontMetric.descent), mPaint);
+        canvas.drawText(String.valueOf(mGame.score), LEFT_BORDER + scoreOffset, (float)(V_OFFSET + this.SCALE/6.0 - mFontMetric.descent), mPaint);
     }
 
     private void draw(Cannon cannon, Canvas canvas) {

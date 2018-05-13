@@ -1,14 +1,13 @@
 package io.github.sigill.dontyoufillit;
 
-import android.util.Log;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Observable;
 
-public class DontYouFillItGame extends Observable {
+public class DontYouFillItGame {
     public enum State { PAUSED, RUNNING, GAMEOVER }
+    private List<DontYouFillItGameListener> mListeners;
     public State state;
     public Cannon cannon;
     public Ball currentBall;
@@ -22,6 +21,7 @@ public class DontYouFillItGame extends Observable {
     public static final float CANNON_LENGTH       =  1/15.0f;
 
     public DontYouFillItGame() {
+        mListeners = new ArrayList<>();
         state = State.PAUSED;
         cannon = new Cannon();
         currentBall = null;
@@ -67,8 +67,9 @@ public class DontYouFillItGame extends Observable {
                 if(this.currentBall.ny < this.currentBall.nr && Utils.normalizeRadian(this.currentBall.direction) > Math.PI) {
                     this.currentBall.state.s = 0;
                     this.state = State.GAMEOVER;
-                    setChanged();
-                    notifyObservers();
+                    for (DontYouFillItGameListener listener : mListeners) {
+                        listener.onGameOver();
+                    }
                     break;
                 } else if(this.currentBall.state.s < 0.001) {
                     if(this.currentBall.ny >= 0) {
@@ -93,5 +94,15 @@ public class DontYouFillItGame extends Observable {
                 0.5f + (float) Math.cos(this.cannon.getAngle()) * CANNON_LENGTH,
                 CANNON_Y_POSITION + CANNON_BASE_HEIGHT + (float) Math.sin(this.cannon.getAngle()) * CANNON_LENGTH,
                 this.cannon.getAngle());
+    }
+
+    public void addListener(DontYouFillItGameListener listener) {
+        if (!mListeners.contains(listener)) {
+            mListeners.add(listener);
+        }
+    }
+
+    public void removeListener(DontYouFillItGameListener listener) {
+        mListeners.remove(listener);
     }
 }
