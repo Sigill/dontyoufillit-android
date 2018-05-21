@@ -1,34 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
-    android:layout_height="match_parent"
-    android:gravity="center"
-    android:orientation="vertical"
-    tools:context="io.github.sigill.dontyoufillit.MainActivity">
-
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="wrap_content"
+    android:layout_height="fill_parent"
+    android:scrollbarStyle="outsideOverlay"
+    android:fillViewport="true">
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:text="@string/app_name"
-        android:textColor="@android:color/white"
-        android:textSize="32dp"
-        android:textStyle="bold"
-        android:layout_marginBottom="40dp"/>
+        android:gravity="center"
+        android:orientation="vertical"
+        tools:context="io.github.sigill.dontyoufillit.MainActivity">
 
-    <Button
-        android:id="@+id/buttonPlay"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@drawable/rounded_button"
-        android:onClick="launchGame"
-        android:paddingLeft="10dp"
-        android:paddingRight="10dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
-        android:text="@string/play"
-        android:textSize="32dp"
-        android:textStyle="bold"
-        android:layout_marginBottom="30dp"></Button>
-</LinearLayout>
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/app_name"
+            android:textColor="@android:color/white"
+            android:textSize="32dp"
+            android:textStyle="bold"
+            android:layout_marginBottom="40dp"/>
+
+        <Button
+            android:id="@+id/buttonPlay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/rounded_button"
+            android:onClick="launchGame"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:text="@string/play"
+            android:textSize="32dp"
+            android:textStyle="bold"
+            android:layout_marginBottom="30dp"/>
+    </LinearLayout>
+</ScrollView>
