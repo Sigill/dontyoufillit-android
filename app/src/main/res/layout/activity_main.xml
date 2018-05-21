@@ -37,5 +37,20 @@
             android:textSize="32dp"
             android:textStyle="bold"
             android:layout_marginBottom="30dp"/>
+
+        <Button
+            android:id="@+id/buttonCredits"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/rounded_button"
+            android:onClick="openCredits"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:text="@string/credits"
+            android:textSize="32dp"
+            android:textStyle="bold"
+            android:layout_marginBottom="30dp"/>
     </LinearLayout>
 </ScrollView>
