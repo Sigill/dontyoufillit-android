@@ -1,9 +1,4 @@
 <resources>
     <string name="app_name">DontYouFillIt</string>
-    <string name="play">Play DontYouFillIt!</string>
-
-    <string name="mode_ready">DontYouFillIt\nPress To Play</string>
-    <string name="mode_pause">Paused\nPress To Resume</string>
-    <string name="mode_gameover_prefix">Game Over\nScore: </string>
-    <string name="mode_gameover_suffix">\nPress To Play</string>
+    <string name="play">Play</string>
 </resources>
