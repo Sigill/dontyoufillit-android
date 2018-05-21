@@ -219,12 +219,16 @@ public class DontYouFillItView extends View {
 
         mPaint.setAntiAlias(true);
 
-        canvas.drawText("Highscore", LEFT_BORDER, (float)(V_OFFSET + this.SCALE/12.0 - mFontMetric.descent), mPaint);
-        canvas.drawText("Score", LEFT_BORDER, (float)(V_OFFSET + this.SCALE/6.0 - mFontMetric.descent), mPaint);
-
         float scoreOffset = mPaint.measureText("Highscore ");
-        canvas.drawText(String.valueOf(this.mHighScore), LEFT_BORDER + scoreOffset, (float)(V_OFFSET + this.SCALE/12.0 - mFontMetric.descent), mPaint);
-        canvas.drawText(String.valueOf(mGame.score), LEFT_BORDER + scoreOffset, (float)(V_OFFSET + this.SCALE/6.0 - mFontMetric.descent), mPaint);
+        float hOffset = LEFT_BORDER + this.SCALE / 60.0f;
+        float vOffset = (float)(V_OFFSET + this.SCALE / 12.0 - mFontMetric.descent);
+
+        canvas.drawText("Highscore", hOffset, vOffset, mPaint);
+        canvas.drawText(String.valueOf(this.mHighScore), hOffset + scoreOffset, vOffset, mPaint);
+
+        vOffset = (float)(V_OFFSET + 0.95 * this.SCALE / 6.0 - mFontMetric.descent);
+        canvas.drawText("Score", hOffset, vOffset, mPaint);
+        canvas.drawText(String.valueOf(mGame.score), hOffset + scoreOffset, vOffset, mPaint);
     }
 
     private void draw(Cannon cannon, Canvas canvas) {
