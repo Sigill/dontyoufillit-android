@@ -38,7 +38,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="10dp"
-            android:text="@string/bsd_license1"
+            android:text="@string/mit_license1"
             android:textColor="@android:color/white" />
 
         <TextView
@@ -46,7 +46,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="10dp"
-            android:text="@string/bsd_license2"
+            android:text="@string/mit_license2"
             android:textColor="@android:color/white" />
 
         <TextView
@@ -54,7 +54,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="10dp"
-            android:text="@string/bsd_license3"
+            android:text="@string/mit_license3"
             android:textColor="@android:color/white" />
 
         <TextView
@@ -62,7 +62,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="10dp"
-            android:text="@string/bsd_license4"
+            android:text="@string/mit_license4"
             android:textColor="@android:color/white" />
     </LinearLayout>
 </ScrollView>
