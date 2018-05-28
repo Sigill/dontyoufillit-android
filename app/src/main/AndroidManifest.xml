@@ -21,8 +21,8 @@
         <activity
             android:name=".GameActivity"
             android:configChanges="screenSize"
-            android:screenOrientation="portrait"></activity>
-        <activity android:name=".CreditsActivity"></activity>
+            android:screenOrientation="portrait" />
+        <activity android:name=".CreditsActivity" />
     </application>
 
 </manifest>
