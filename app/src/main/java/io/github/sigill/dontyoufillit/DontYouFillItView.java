@@ -130,13 +130,16 @@ public class DontYouFillItView extends View {
             return;
 
         final long now = System.currentTimeMillis();
-        final long elapsed = now - this.fpsCounterStart;
-        this.fpsCounter++;
 
-        if (elapsed >= 2000) {
-            Log.v("FPS_COUNTER", (1000 * this.fpsCounter / (elapsed)) + "fps");
-            this.fpsCounterStart = now;
-            this.fpsCounter = 0;
+        if (BuildConfig.DEBUG) {
+            final long elapsed = now - this.fpsCounterStart;
+            this.fpsCounter++;
+
+            if (elapsed >= 2000) {
+                Log.v("FPS_COUNTER", (1000 * this.fpsCounter / (elapsed)) + "fps");
+                this.fpsCounterStart = now;
+                this.fpsCounter = 0;
+            }
         }
 
         mLastFrameTimestamp = now;
