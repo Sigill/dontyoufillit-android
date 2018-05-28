@@ -56,6 +56,7 @@ public class GameActivity extends Activity implements Choreographer.FrameCallbac
 
         if(mGame.state == DontYouFillItGame.State.GAMEOVER) {
             mGame.reset();
+            dontYouFillItView.setHighscore(mHighScore);
             return true;
         }
 
