@@ -3,6 +3,12 @@
     package="io.github.sigill.dontyoufillit"
     android:installLocation="auto">
 
+    <supports-screens
+        android:smallScreens="true"
+        android:normalScreens="true"
+        android:largeScreens="true"
+        android:xlargeScreens="true" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
