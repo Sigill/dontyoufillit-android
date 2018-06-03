@@ -19,6 +19,7 @@ android {
         }
         debug {
             applicationIdSuffix ".dev"
+            versionNameSuffix "-dev"
             crunchPngs false // Already crunched
             minifyEnabled false
             debuggable true
