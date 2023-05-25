@@ -25,6 +25,7 @@ android {
             debuggable true
         }
     }
+    namespace 'io.github.sigill.dontyoufillit'
 }
 
 dependencies {
