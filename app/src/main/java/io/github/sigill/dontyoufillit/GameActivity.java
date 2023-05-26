@@ -1,6 +1,7 @@
 package io.github.sigill.dontyoufillit;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -17,6 +18,12 @@ public class GameActivity extends Activity implements Choreographer.FrameCallbac
     private long mLastTouchTimestamp = 0;
     private Integer mHighScore = 0;
 
+    private SharedPreferences getPrefs() {
+        // https://github.com/aosp-mirror/platform_frameworks_base/blob/3e5d8c4b9cbba8ecde7cd33dbc3bde8da8ba0c36/core/java/android/preference/PreferenceManager.java
+        final String defaultSharedPreferenceName = this.getPackageName() + "_preferences";
+        return getSharedPreferences(defaultSharedPreferenceName, Context.MODE_PRIVATE);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -24,7 +31,7 @@ public class GameActivity extends Activity implements Choreographer.FrameCallbac
         mGame = new DontYouFillItGame();
         mGame.addListener(this);
 
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences prefs = getPrefs();
         this.mHighScore = prefs.getInt(HIGHSCORE_PREF, 0);
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -106,7 +113,7 @@ public class GameActivity extends Activity implements Choreographer.FrameCallbac
         if(mGame.score > this.mHighScore) {
             this.mHighScore = mGame.score;
 
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            SharedPreferences prefs = getPrefs();
             SharedPreferences.Editor editor = prefs.edit();
             editor.putInt(HIGHSCORE_PREF, this.mHighScore);
             editor.commit();
