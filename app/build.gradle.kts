@@ -11,8 +11,8 @@ android {
         applicationId = "io.github.sigill.dontyoufillit"
         minSdk = 24
         targetSdk = 34
-        versionCode = 6
-        versionName = "1.0.4"
+        versionCode = 7
+        versionName = "1.0.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -24,6 +24,7 @@ android {
         release {
             isCrunchPngs = false // Already crunched
             isMinifyEnabled = true
+            isDebuggable = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

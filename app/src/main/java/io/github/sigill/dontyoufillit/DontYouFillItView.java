@@ -26,7 +26,7 @@ public class DontYouFillItView extends View {
 
     /** Paint object */
     private final Paint mPaint = new Paint();
-    private final PathEffect mDottedEffect = new DashPathEffect(new float[] {2, 2}, 0);
+    private final PathEffect mDottedEffect = new DashPathEffect(new float[] {3, 3}, 0);
     private final Path mMainBorder = new Path(), mBottomBorder = new Path();
 
     private int fpsCounter = 0;
@@ -98,15 +98,28 @@ public class DontYouFillItView extends View {
         this.CANNON_LENGTH = this.SCALE / 15.0f;
         this.CANNON_WIDTH = this.SCALE / 18.0f;
 
+        /*
+        System.out.println("GAME_WIDTH: " + this.GAME_WIDTH);
+        System.out.println("GAME_HEIGHT: " + this.GAME_HEIGHT);
+
+        System.out.println("V_OFFSET: " + this.V_OFFSET);
+        System.out.println("H_OFFSET: " + this.H_OFFSET);
+
+        System.out.println("TOP_BORDER: " + this.TOP_BORDER);
+        System.out.println("BOTTOM_BORDER: " + this.BOTTOM_BORDER);
+        System.out.println("LEFT_BORDER: " + this.LEFT_BORDER);
+        System.out.println("RIGHT_BORDER: " + this.RIGHT_BORDER);
+        */
+
         mMainBorder.reset();
-        mMainBorder.moveTo(this.LEFT_BORDER, this.BOTTOM_BORDER);
-        mMainBorder.lineTo(this.LEFT_BORDER, this.TOP_BORDER);
+        mMainBorder.moveTo(this.LEFT_BORDER + 1, this.BOTTOM_BORDER);
+        mMainBorder.lineTo(this.LEFT_BORDER + 1, this.TOP_BORDER);
         mMainBorder.lineTo(this.RIGHT_BORDER-1, this.TOP_BORDER);
         mMainBorder.lineTo(this.RIGHT_BORDER-1, this.BOTTOM_BORDER);
 
         mBottomBorder.reset();
         mBottomBorder.moveTo(this.LEFT_BORDER, this.BOTTOM_BORDER);
-        mBottomBorder.lineTo(this.RIGHT_BORDER-1, this.BOTTOM_BORDER);
+        mBottomBorder.lineTo(this.RIGHT_BORDER, this.BOTTOM_BORDER);
     }
 
     @Override
@@ -193,7 +206,7 @@ public class DontYouFillItView extends View {
 
         mPaint.setColor(Color.WHITE);
         mPaint.setStyle(Style.STROKE);
-        mPaint.setStrokeWidth(0);
+        mPaint.setStrokeWidth(2);
 
         canvas.drawPath(mMainBorder, mPaint);
 
